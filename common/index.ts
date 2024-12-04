@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export function readInput(fileName: string, splitBy = '\n'): string[] {
   return fs.readFileSync(path.join(fileName)).toString('utf-8').split(splitBy);
@@ -113,7 +113,7 @@ export function* primeGenerator(): Generator<number> {
 }
 
 export function flipArray<T>(originalArray: Array<T[]>): Array<T[]> {
-  const flippedArray: Array<T[]> = [...Array(originalArray[0].length)].map(() => []);
+  const flippedArray: Array<T[]> = [...Array(originalArray[0].length)].map((): T[] => []);
 
   for (const [rowIndex, row] of originalArray.entries()) {
     for (const [columnIndex, column] of row.entries()) {
