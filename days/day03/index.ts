@@ -1,9 +1,11 @@
 // https://adventofcode.com/2024/day/3
 // Day 3: Mull It Over
 
+import path from 'node:path';
+
 import { readInput } from '../../common/index';
 
-const [corruptedProgram] = readInput('days/day03/input01', '/n/n/n/n');
+const [corruptedProgram] = readInput(path.join(__dirname, 'input01'), '/n/n/n/n');
 
 const findMulInstructionsRegExp = /mul\(\d{1,3},\d{1,3}\)/g;
 const matches = [...corruptedProgram.matchAll(findMulInstructionsRegExp)].map((match) => match[0]);

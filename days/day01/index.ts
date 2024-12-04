@@ -1,9 +1,11 @@
 // https://adventofcode.com/2024/day/1
 // Day 1: Historian Hysteria
 
+import path from 'node:path';
+
 import { readInput } from '../../common/index';
 
-const part01Input = readInput('days/day01/input01', '\n').map((row) => row.split('   '));
+const part01Input = readInput(path.join(__dirname, 'input01'), '\n').map((row) => row.split('   '));
 
 const leftList: number[] = [];
 const rightList: number[] = [];

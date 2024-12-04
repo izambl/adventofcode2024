@@ -1,9 +1,11 @@
 // https://adventofcode.com/2024/day/2
 // Day 2: Red-Nosed Reports
 
+import path from 'node:path';
+
 import { readInput } from '../../common/index';
 
-const reports = readInput('days/day02/input01', '\n').map((row) => row.split(' ').map(Number));
+const reports = readInput(path.join(__dirname, 'input01'), '\n').map((row) => row.split(' ').map(Number));
 
 function isReportSafe(report: number[]): boolean {
   let isIncreasing = true;

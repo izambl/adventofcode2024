@@ -5,10 +5,6 @@ export function readInput(fileName: string, splitBy = '\n'): string[] {
   return fs.readFileSync(path.join(fileName)).toString('utf-8').split(splitBy);
 }
 
-export function readNumberInput(fileName: string) {
-  return readInput(fileName).map(Number);
-}
-
 export function findLCMBruteForced(numbers: number[]): number {
   const multiples = numbers.map(() => ({}) as { [key: number]: boolean });
   let multiplier = 1;
