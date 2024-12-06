@@ -75,10 +75,11 @@ function walk(startPosition = '', startDirection = 'NORTH', addedPosition = 'NON
   return [visitedLocations, false];
 }
 
-const part01 = Object.keys(walk(guardPosition)[0]).length;
+const [visitedLocations] = walk(guardPosition);
+const part01 = Object.keys(visitedLocations).length;
 
 // Check with objects in all possible locations
-const part02 = Object.keys(map).reduce((loopPositions, tile) => {
+const part02 = Object.keys(visitedLocations).reduce((loopPositions, tile) => {
   if (tile === guardPosition) return loopPositions;
   if (map[tile] !== '.') return loopPositions;
 
@@ -91,8 +92,3 @@ const part02 = Object.keys(map).reduce((loopPositions, tile) => {
 
 process.stdout.write(`Part 01: ${part01}\n`);
 process.stdout.write(`Part 02: ${part02}\n`);
-
-// Empty spaces 16106
-// Blocked spaces 794
-// In a loop: 1703
-// Not in a loop: 14403
