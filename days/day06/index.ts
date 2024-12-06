@@ -7,17 +7,17 @@ import _ from 'lodash';
 import { readInput } from '../../common/index';
 
 const input = readInput(path.join(__dirname, 'input01'), '\n').map((row) => row.split(''));
-const map: Record<string, string> = {};
+const originalMap: Record<string, string> = {};
 let guardPosition = '';
 
 // Build the map
 for (let y = 0; y < input.length; y++) {
   for (let x = 0; x < input.length; x++) {
     const currentTile = input[y][x];
-    map[`${x}:${y}`] = currentTile;
+    originalMap[`${x}:${y}`] = currentTile;
     if (currentTile === '^') {
       guardPosition = `${x}:${y}`;
-      map[`${x}:${y}`] = '.';
+      originalMap[`${x}:${y}`] = '.';
     }
   }
 }
@@ -29,7 +29,7 @@ const directions: Record<string, string> = {
   WEST: 'NORTH',
 };
 
-function walk(startPosition = '', startDirection = 'NORTH', addedPosition = 'NONE') {
+function walk(map: Record<string, string>, startPosition = '', startDirection = 'NORTH') {
   const visitedLocations: Record<string, Record<string, boolean>> = {};
 
   let guardDirection = startDirection;
@@ -54,20 +54,16 @@ function walk(startPosition = '', startDirection = 'NORTH', addedPosition = 'NON
     if (guardDirection === 'SOUTH') newY += 1;
     if (guardDirection === 'WEST') newX -= 1;
 
-    if (map[`${newX}:${newY}`] === '#' || addedPosition === `${newX}:${newY}`) {
-      newX = Number(x);
-      newY = Number(y);
-      guardDirection = directions[guardDirection];
+    const newPosition = `${newX}:${newY}`;
 
-      if (guardDirection === 'NORTH') newY -= 1;
-      if (guardDirection === 'EAST') newX += 1;
-      if (guardDirection === 'SOUTH') newY += 1;
-      if (guardDirection === 'WEST') newX -= 1;
+    if (map[newPosition] === '#') {
+      guardDirection = directions[guardDirection];
+      continue;
     }
 
-    guardPosition = `${newX}:${newY}`;
+    guardPosition = newPosition;
 
-    if (map[`${newX}:${newY}`] === undefined) {
+    if (map[newPosition] === undefined) {
       break;
     }
   }
@@ -75,15 +71,19 @@ function walk(startPosition = '', startDirection = 'NORTH', addedPosition = 'NON
   return [visitedLocations, false];
 }
 
-const [visitedLocations] = walk(guardPosition);
+const [visitedLocations] = walk(originalMap, guardPosition);
 const part01 = Object.keys(visitedLocations).length;
 
 // Check with objects in all possible locations
 const part02 = Object.keys(visitedLocations).reduce((loopPositions, tile) => {
-  if (tile === guardPosition) return loopPositions;
-  if (map[tile] !== '.') return loopPositions;
+  const newMap = JSON.parse(JSON.stringify(originalMap));
 
-  const [_, inALoop] = walk(guardPosition, 'NORTH', tile);
+  if (tile === guardPosition) return loopPositions;
+  if (newMap[tile] !== '.') return loopPositions;
+
+  newMap[tile] = '#';
+
+  const [_, inALoop] = walk(newMap, guardPosition, 'NORTH');
   if (inALoop) {
     return loopPositions + 1;
   }
