@@ -37,9 +37,28 @@ for (const [antenna, { positions }] of Object.entries(antennas)) {
   antiNodes[antenna] = { positions: [] };
   for (const pair of antennaPairs) {
     const [[ax, ay], [bx, by]] = pair;
+    const minX = 0;
+    const maxX = input[0].length - 1;
+    const maxY = input.length - 1;
+    const minY = 0;
 
-    antiNodes[antenna].positions.push([bx + (bx - ax), by + (by - ay)]);
-    antiNodes[antenna].positions.push([ax + (ax - bx), ay + (ay - by)]);
+    let newBx = bx;
+    let newBy = by;
+    while (newBx < maxX && newBy < maxY && newBx > minX && newBy > minY) {
+      newBx = newBx + (bx - ax);
+      newBy = newBy + (by - ay);
+
+      antiNodes[antenna].positions.push([newBx, newBy]);
+    }
+
+    let newAx = ax;
+    let newAy = ay;
+    while (newAx < maxX && newAy < maxY && newAx > minX && newAy > minY) {
+      newAx = newAx + (ax - bx);
+      newAy = newAy + (ay - by);
+
+      antiNodes[antenna].positions.push([newAx, newAy]);
+    }
   }
 }
 
@@ -51,7 +70,13 @@ const allAntinodes = Object.keys(antiNodes).reduce((uniques, antiNode) => {
   return uniques;
 }, new Set<string>());
 
-const part01 = [...allAntinodes].filter((antinodeString) => {
+for (const antenna of Object.keys(antennas)) {
+  for (const [x, y] of antennas[antenna].positions) {
+    allAntinodes.add(`${x}:${y}`);
+  }
+}
+
+const part02 = [...allAntinodes].filter((antinodeString) => {
   const [x, y] = antinodeString.split(':').map(Number);
   if (x < 0 || y < 0) return false;
   if (x >= input[0].length || y >= input.length) return false;
@@ -59,5 +84,4 @@ const part01 = [...allAntinodes].filter((antinodeString) => {
   return true;
 }).length;
 
-process.stdout.write(`Part 01: ${part01}\n`);
-process.stdout.write(`Part 02: ${2}\n`);
+process.stdout.write(`Part 02: ${part02}\n`);
