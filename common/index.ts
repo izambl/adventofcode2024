@@ -119,3 +119,16 @@ export function flipArray<T>(originalArray: Array<T[]>): Array<T[]> {
 
   return flippedArray;
 }
+
+export function MakeTuple<T>() {
+  const cache = new Map<string, T>();
+
+  return (arg: T) => {
+    const key = JSON.stringify(arg);
+
+    if (cache.has(key)) return cache.get(key);
+
+    cache.set(key, arg);
+    return arg;
+  };
+}
