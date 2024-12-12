@@ -7,69 +7,66 @@ import { readInput } from '../../common';
 
 const input = readInput(path.join(__dirname, 'input01'), '\n')[0].split(' ').map(Number);
 
-type Pebble = {
-  left: Pebble | null;
-  right: Pebble | null;
-  value: string;
-};
-let firstPebble: Pebble = null;
-let lastPebble: Pebble = null;
+let part01PebbleMap: Record<string, number> = {};
+let part02PebbleMap: Record<string, number> = {};
+
 for (const peb of input) {
-  const newPebble: Pebble = {
-    left: lastPebble,
-    right: null,
-    value: String(peb),
-  };
-  if (firstPebble === null) firstPebble = newPebble;
-  if (lastPebble !== null) lastPebble.right = newPebble;
-  lastPebble = newPebble;
+  part01PebbleMap[peb] = 1;
+  part02PebbleMap[peb] = 1;
 }
 
-function getLength(firstPebble: Pebble) {
-  let curr = firstPebble;
-  let total = 0;
-  while (curr !== null) {
-    total++;
-    curr = curr.right;
-  }
+let part01Rounds = 25;
+while (part01Rounds-- > 0) {
+  const newPebbleMap: Record<string, number> = {};
 
-  return total;
-}
+  for (const [pebble, quantity] of Object.entries(part01PebbleMap)) {
+    if (pebble === '0') {
+      const newPebble = '1';
+      newPebbleMap[newPebble] = newPebbleMap[newPebble] === undefined ? quantity : newPebbleMap[newPebble] + quantity;
+    } else if (pebble.length % 2 === 0) {
+      const leftPebble = pebble.substring(0, pebble.length / 2);
+      const rightPebble = String(Number(pebble.substring(pebble.length / 2)));
 
-let rounds = 75;
-while (rounds-- > 0) {
-  console.log('ROUND', rounds, getLength(firstPebble));
-  let currPebble = firstPebble;
-  while (currPebble !== null) {
-    if (currPebble.value === '0') {
-      currPebble.value = '1';
-      currPebble = currPebble.right;
-    } else if (currPebble.value.length % 2 === 0) {
-      const leftPebble: Pebble = {
-        value: currPebble.value.substring(0, currPebble.value.length / 2),
-        left: currPebble.left,
-        right: null,
-      };
-      const rightPebble: Pebble = {
-        value: String(Number(currPebble.value.substring(currPebble.value.length / 2))),
-        left: leftPebble,
-        right: currPebble.right,
-      };
-      leftPebble.right = rightPebble;
-
-      if (currPebble.left !== null) currPebble.left.right = leftPebble;
-      if (currPebble.right !== null) currPebble.right.left = rightPebble;
-
-      if (currPebble === firstPebble) firstPebble = leftPebble;
-      currPebble = rightPebble.right;
+      newPebbleMap[leftPebble] =
+        newPebbleMap[leftPebble] === undefined ? quantity : newPebbleMap[leftPebble] + quantity;
+      newPebbleMap[rightPebble] =
+        newPebbleMap[rightPebble] === undefined ? quantity : newPebbleMap[rightPebble] + quantity;
     } else {
-      currPebble.value = String(Number(currPebble.value) * 2024);
-      currPebble = currPebble.right;
+      const newPebble = String(Number(pebble) * 2024);
+      newPebbleMap[newPebble] = newPebbleMap[newPebble] === undefined ? quantity : newPebbleMap[newPebble] + quantity;
     }
   }
+
+  part01PebbleMap = newPebbleMap;
 }
 
-const part01 = getLength(firstPebble);
+let part02Rounds = 75;
+while (part02Rounds-- > 0) {
+  const newPebbleMap: Record<string, number> = {};
+
+  for (const [pebble, quantity] of Object.entries(part02PebbleMap)) {
+    if (pebble === '0') {
+      const newPebble = '1';
+      newPebbleMap[newPebble] = newPebbleMap[newPebble] === undefined ? quantity : newPebbleMap[newPebble] + quantity;
+    } else if (pebble.length % 2 === 0) {
+      const leftPebble = pebble.substring(0, pebble.length / 2);
+      const rightPebble = String(Number(pebble.substring(pebble.length / 2)));
+
+      newPebbleMap[leftPebble] =
+        newPebbleMap[leftPebble] === undefined ? quantity : newPebbleMap[leftPebble] + quantity;
+      newPebbleMap[rightPebble] =
+        newPebbleMap[rightPebble] === undefined ? quantity : newPebbleMap[rightPebble] + quantity;
+    } else {
+      const newPebble = String(Number(pebble) * 2024);
+      newPebbleMap[newPebble] = newPebbleMap[newPebble] === undefined ? quantity : newPebbleMap[newPebble] + quantity;
+    }
+  }
+
+  part02PebbleMap = newPebbleMap;
+}
+
+const part01 = Object.values(part01PebbleMap).reduce((total, quantity) => total + quantity, 0);
+const part02 = Object.values(part02PebbleMap).reduce((total, quantity) => total + quantity, 0);
 
 process.stdout.write(`Part 01: ${part01}\n`);
-process.stdout.write(`Part 02: ${2}\n`);
+process.stdout.write(`Part 02: ${part02}\n`);
