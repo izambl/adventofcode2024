@@ -11,9 +11,8 @@ const input = readInput(path.join(__dirname, 'input01'), '\n').map((row) => row.
 const map = buildMap2d(input);
 
 type Region = {
-  tilesArray: Tile[];
-  size: number;
   plant: string;
+  size: number;
   map: TileMap;
 };
 const regions: Region[] = [];
@@ -23,20 +22,19 @@ for (const [_, tile] of map.entries()) {
 
   if (isAlreadyInARegion) continue;
 
-  const newRegion: Region = { map: new Map(), plant: tile.value, size: 0, tilesArray: [] };
+  const newRegion: Region = { map: new Map(), plant: tile.value, size: 0 };
 
   walkRegion(map, tile);
 
-  function walkRegion(map: TileMap, startTile: Tile) {
+  function walkRegion(map: TileMap, currentTile: Tile) {
     newRegion.size += 1;
-    newRegion.tilesArray.push(startTile);
-    newRegion.map.set(startTile.position, startTile);
+    newRegion.map.set(currentTile.position, currentTile);
 
     for (const direction of ['up', 'down', 'right', 'left'] as const) {
-      const nextTile = startTile[direction];
+      const nextTile = currentTile[direction];
 
       if (nextTile === null) continue;
-      if (nextTile.value !== startTile.value) continue;
+      if (nextTile.value !== currentTile.value) continue;
       if (newRegion.map.has(nextTile.position)) continue;
 
       walkRegion(map, nextTile);
@@ -47,7 +45,7 @@ for (const [_, tile] of map.entries()) {
 }
 
 const part01 = regions.reduce((total, region) => {
-  const fences = region.tilesArray.reduce((fences, tile) => {
+  const fences = [...region.map.values()].reduce((fences, tile) => {
     let sum = 0;
     sum += tile?.up?.value !== tile.value ? 1 : 0;
     sum += tile?.right?.value !== tile.value ? 1 : 0;
@@ -62,8 +60,8 @@ const part01 = regions.reduce((total, region) => {
 
 let part02 = 0;
 for (const region of regions) {
-  const allXs = region.tilesArray.map((tile) => Number(tile.position[0]));
-  const allYs = region.tilesArray.map((tile) => Number(tile.position[1]));
+  const allXs = [...region.map.values()].map((tile) => Number(tile.position[0]));
+  const allYs = [...region.map.values()].map((tile) => Number(tile.position[1]));
   const minX = Math.min(...allXs);
   const maxX = Math.max(...allXs);
   const minY = Math.min(...allYs);
@@ -137,7 +135,7 @@ for (const region of regions) {
     if (sideRightStart) ySides++;
   }
 
-  console.log(region.plant, xSides, ySides, region.size);
+  console.log(`${region.plant}: ${xSides + ySides} * ${region.size} = ${(xSides + ySides) * region.size}`);
 
   part02 += (xSides + ySides) * region.size;
 }
