@@ -19,15 +19,15 @@ type Region = {
 const regions: Region[] = [];
 
 for (const [_, tile] of map.entries()) {
-  const isAlreadyInABlock = regions.some((block) => block.map.has(tile.position));
+  const isAlreadyInARegion = regions.some((region) => region.map.has(tile.position));
 
-  if (isAlreadyInABlock) continue;
+  if (isAlreadyInARegion) continue;
 
   const newRegion: Region = { map: new Map(), plant: tile.value, size: 0, tilesArray: [] };
 
-  walkBlock(map, tile);
+  walkRegion(map, tile);
 
-  function walkBlock(map: TileMap, startTile: Tile) {
+  function walkRegion(map: TileMap, startTile: Tile) {
     newRegion.size += 1;
     newRegion.tilesArray.push(startTile);
     newRegion.map.set(startTile.position, startTile);
@@ -39,15 +39,15 @@ for (const [_, tile] of map.entries()) {
       if (nextTile.value !== startTile.value) continue;
       if (newRegion.map.has(nextTile.position)) continue;
 
-      walkBlock(map, nextTile);
+      walkRegion(map, nextTile);
     }
   }
 
   regions.push(newRegion);
 }
 
-const part01 = regions.reduce((total, block) => {
-  const fences = block.tilesArray.reduce((fences, tile) => {
+const part01 = regions.reduce((total, region) => {
+  const fences = region.tilesArray.reduce((fences, tile) => {
     let sum = 0;
     sum += tile?.up?.value !== tile.value ? 1 : 0;
     sum += tile?.right?.value !== tile.value ? 1 : 0;
@@ -57,7 +57,7 @@ const part01 = regions.reduce((total, block) => {
     return fences + sum;
   }, 0);
 
-  return total + fences * block.size;
+  return total + fences * region.size;
 }, 0);
 
 let part02 = 0;
