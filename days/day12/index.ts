@@ -3,51 +3,12 @@
 
 import path from 'node:path';
 
-import { MakeTuple, readInput } from '../../common';
+import { readInput } from '../../common';
+import { P, type Tile, type TileMap, buildMap2d } from '../../common/map-builder';
 
 const input = readInput(path.join(__dirname, 'input01'), '\n').map((row) => row.split(''));
 
-type Position = [number, number];
-type Tile = {
-  up: Tile | null;
-  right: Tile | null;
-  down: Tile | null;
-  left: Tile | null;
-  value: string;
-  position: Position;
-};
-type TileMap = Map<Position, Tile>;
-
-const T = MakeTuple<[number, number]>();
-
-function buildMap(rawMap: string[][]): TileMap {
-  const map = new Map<Position, Tile>();
-
-  for (let y = 0; y < rawMap.length; y++) {
-    for (let x = 0; x < rawMap[0].length; x++) {
-      const tile: Tile = {
-        up: null,
-        left: null,
-        right: null,
-        down: null,
-        value: rawMap[y][x],
-        position: T([x, y]),
-      };
-      map.set(T([x, y]), tile);
-    }
-  }
-
-  for (const [[x, y], tile] of map) {
-    tile.up = map.get(T([x, y - 1])) ?? null;
-    tile.right = map.get(T([x + 1, y])) ?? null;
-    tile.down = map.get(T([x, y + 1])) ?? null;
-    tile.left = map.get(T([x - 1, y])) ?? null;
-  }
-
-  return map;
-}
-
-const map = buildMap(input);
+const map = buildMap2d(input);
 
 type Region = {
   tilesArray: Tile[];
@@ -58,7 +19,7 @@ type Region = {
 const regions: Region[] = [];
 
 for (const [_, tile] of map.entries()) {
-  const isAlreadyInABlock = regions.some((block) => block.tilesArray.includes(tile));
+  const isAlreadyInABlock = regions.some((block) => block.map.has(tile.position));
 
   if (isAlreadyInABlock) continue;
 
@@ -76,7 +37,7 @@ for (const [_, tile] of map.entries()) {
 
       if (nextTile === null) continue;
       if (nextTile.value !== startTile.value) continue;
-      if (newRegion.tilesArray.includes(nextTile)) continue;
+      if (newRegion.map.has(nextTile.position)) continue;
 
       walkBlock(map, nextTile);
     }
@@ -115,7 +76,7 @@ for (const region of regions) {
     let sideDownStart = false;
 
     for (let x = minX; x <= maxX; x++) {
-      const tile = region.map.get(T([x, y]));
+      const tile = region.map.get(P(x, y));
 
       if (!tile) {
         if (sideUpstart) xSides++;
@@ -149,7 +110,7 @@ for (const region of regions) {
     let sideRightStart = false;
 
     for (let y = minY; y <= maxY; y++) {
-      const tile = region.map.get(T([x, y]));
+      const tile = region.map.get(P(x, y));
 
       if (!tile) {
         if (sideLeftStart) ySides++;
