@@ -52,4 +52,49 @@ function walk(tile: Tile | null, map: TileMap, visitedMap: Map<Tile, number>, pa
 walk(start, map, visitedMap, [], 0);
 
 process.stdout.write(`Part 01: ${part01}\n`);
-process.stdout.write(`Part 02: ${2}\n`);
+
+const part2Map = buildMap2d(rawMap);
+for (const tile of part2Map.values()) {
+  tile.value = '.';
+}
+
+function findBlock(tile: Tile, block: Set<Tile>): Set<Tile> {
+  if (!tile) return block;
+  if (tile.value !== '#') return block;
+  if (block.has(tile)) return block;
+
+  block.add(tile);
+
+  findBlock(tile.up, block);
+  findBlock(tile.right, block);
+  findBlock(tile.down, block);
+  findBlock(tile.left, block);
+
+  findBlock(tile.left?.up, block);
+  findBlock(tile.left?.down, block);
+  findBlock(tile.right?.up, block);
+  findBlock(tile.right?.down, block);
+
+  return block;
+}
+
+let part02 = '';
+for (const [x, y] of input) {
+  const position = P(x, y);
+  const tile = part2Map.get(position);
+  tile.value = '#';
+
+  const corruptedRegion = findBlock(tile, new Set());
+  const maxX = Math.max(...[...corruptedRegion].map((r) => r.position[0]));
+  const minX = Math.min(...[...corruptedRegion].map((r) => r.position[0]));
+
+  const maxY = Math.max(...[...corruptedRegion].map((r) => r.position[1]));
+  const minY = Math.min(...[...corruptedRegion].map((r) => r.position[1]));
+
+  if ((minX === 0 && maxX === gridSize) || (minY === 0 && maxY === gridSize)) {
+    part02 = position.join(',');
+    break;
+  }
+}
+
+process.stdout.write(`Part 02: ${part02}\n`);
