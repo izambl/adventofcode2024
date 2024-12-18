@@ -63,16 +63,17 @@ function runProgram(instructions: number[], registerValues: { A: number; B: numb
   return output;
 }
 
-function runProgram2(instructions: number[], registerValues: { A: number; B: number; C: number }): number[] {
-  const Registers: Record<string, number> = {
+function runProgram2(instructions: number[], registerValues: { A: bigint; B: bigint; C: bigint }): number[] {
+  const Registers: Record<string, bigint> = {
     ...registerValues,
   };
-  function Combo(operand: number): number {
+  function Combo(operand: number): bigint {
     if (operand === 7) throw new Error('Reserved operand');
     if (operand === 6) return Registers.C;
     if (operand === 5) return Registers.B;
     if (operand === 4) return Registers.A;
-    return operand;
+
+    return BigInt(operand);
   }
 
   const output: number[] = [];
@@ -83,31 +84,31 @@ function runProgram2(instructions: number[], registerValues: { A: number; B: num
 
     switch (opcode) {
       case 0:
-        Registers.A = Math.floor(Registers.A / 2 ** Combo(operand));
+        Registers.A = Registers.A >> Combo(operand);
         break;
       case 1:
-        Registers.B = Number(BigInt(Registers.B) ^ BigInt(operand));
+        Registers.B = Registers.B ^ BigInt(operand);
         break;
       case 2:
-        Registers.B = Combo(operand) & 7;
+        Registers.B = Combo(operand) & 7n;
         break;
       case 3:
         if (Registers.A > 0) pointer = operand - 2;
         break;
       case 4:
-        Registers.B = Number(BigInt(Registers.B) ^ BigInt(Registers.C));
+        Registers.B = Registers.B ^ Registers.C;
         break;
       case 5:
-        output.push(Combo(operand) & 7);
+        output.push(Number(Combo(operand) & 7n));
         if (output.at(-1) !== instructions[output.length - 1]) {
           return output;
         }
         break;
       case 6:
-        Registers.B = Math.floor(Registers.A / 2 ** Combo(operand));
+        Registers.B = Registers.A >> Combo(operand);
         break;
       case 7:
-        Registers.C = Math.floor(Registers.A / 2 ** Combo(operand));
+        Registers.C = Registers.A >> Combo(operand);
         break;
       default:
         throw new Error('Unknown opcode');
@@ -121,13 +122,13 @@ function runProgram2(instructions: number[], registerValues: { A: number; B: num
 
 const part01 = runProgram([...instructions], { A: a, B: b, C: c }).join(',');
 
-let registerA = 4681100000;
+let registerA = 35184372088832n;
 const expectedOutput = instructions.join(',');
 let output = '';
 while (output !== expectedOutput) {
-  registerA++;
-  output = runProgram2([...instructions], { A: registerA, B: b, C: c }).join(',');
-  if (registerA % 1_000_000 === 0) console.log(registerA);
+  registerA += 1n;
+  output = runProgram2([...instructions], { A: registerA, B: BigInt(b), C: BigInt(c) }).join(',');
+  if (registerA % 10_000_000n === 0n) console.log(registerA);
 }
 
 process.stdout.write(`Part 01: ${part01}\n`);
