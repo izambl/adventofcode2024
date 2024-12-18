@@ -49,12 +49,16 @@ export function buildMap2d(rawMap: string[][]): TileMap {
   return map;
 }
 
-export function printMap(map: TileMap) {
+export function printMap(map: TileMap, path?: Tile[]) {
   let currentTile = map.get(P(0, 0));
   let firstInRow = currentTile;
 
   while (currentTile) {
-    process.stdout.write(currentTile.value);
+    if (path?.includes(currentTile)) {
+      process.stdout.write('O');
+    } else {
+      process.stdout.write(currentTile.value);
+    }
 
     if (!currentTile.right) {
       currentTile = firstInRow.down;

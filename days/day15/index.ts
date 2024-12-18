@@ -3,7 +3,6 @@
 
 import path from 'node:path';
 
-import { dir } from 'node:console';
 import { readInput } from '../../common';
 import { P, type Tile, type TileMap, buildMap2d, printMap } from '../../common/map-builder';
 
