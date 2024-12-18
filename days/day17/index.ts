@@ -100,9 +100,6 @@ function runProgram2(instructions: number[], registerValues: { A: bigint; B: big
         break;
       case 5:
         output.push(Number(Combo(operand) & 7n));
-        if (output.at(-1) !== instructions[output.length - 1]) {
-          return output;
-        }
         break;
       case 6:
         Registers.B = Registers.A >> Combo(operand);
@@ -122,14 +119,38 @@ function runProgram2(instructions: number[], registerValues: { A: bigint; B: big
 
 const part01 = runProgram([...instructions], { A: a, B: b, C: c }).join(',');
 
-let registerA = 35184372088832n;
-const expectedOutput = instructions.join(',');
-let output = '';
-while (output !== expectedOutput) {
-  registerA += 1n;
-  output = runProgram2([...instructions], { A: registerA, B: BigInt(b), C: BigInt(c) }).join(',');
-  if (registerA % 10_000_000n === 0n) console.log(registerA);
+const part2Results: bigint[] = [];
+function walk(currentA: string, instructionSet: number[], round: number) {
+  if (round > instructionSet.length) return;
+  const finding = instructionSet.slice(round * -1);
+
+  for (let i = 7; i >= 0; i--) {
+    const currA = BigInt(`0b${currentA}${i.toString(2).padStart(3, '0')}`);
+
+    process.stdout.write(`    Try with ${currentA}${i.toString(2).padStart(3, '0')} [${currA}]: `);
+
+    const result = runProgram2([...instructions], { A: currA, B: 0n, C: 0n });
+
+    process.stdout.write(`${result.join(',')} -- `);
+
+    if (result.join(',') === finding.join(',')) {
+      const nextA = currentA + i.toString(2).padStart(3, '0');
+      process.stdout.write(`FOUND, A = ${nextA}\n`);
+
+      if (result.join(',') === instructionSet.join(',')) {
+        part2Results.push(BigInt(`0b${nextA}`));
+      }
+
+      walk(nextA, instructionSet, round + 1);
+    } else {
+      process.stdout.write('FAIL\n');
+    }
+  }
 }
 
+walk('000', instructions, 1);
+
+const part02 = Math.min(...part2Results.map(Number));
+
 process.stdout.write(`Part 01: ${part01}\n`);
-process.stdout.write(`Part 02: ${registerA}\n`);
+process.stdout.write(`Part 02: ${part02}\n`);
