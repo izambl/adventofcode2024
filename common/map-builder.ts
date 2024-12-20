@@ -1,4 +1,5 @@
 export type Position = [number, number];
+export type Direction = 'up' | 'right' | 'down' | 'left';
 export type Tile = {
   up: Tile | null;
   right: Tile | null;
