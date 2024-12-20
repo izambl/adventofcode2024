@@ -9,23 +9,38 @@ const [rawTowels, rawPatterns] = readInput(path.join(__dirname, 'input01'), '\n\
 const towels = rawTowels.split(', ');
 const patterns = rawPatterns.split('\n');
 
-const possibles: Record<string, boolean> = {};
+const possibles: Record<string, number> = {};
 for (const pattern of patterns) {
-  function processPattern(patt: string) {
-    if (possibles[pattern]) return;
-    if (patt.length === 0) {
-      possibles[pattern] = true;
+  const possibleTowels = towels.filter((towel) => pattern.indexOf(towel) !== -1);
+  console.log(towels.length, possibleTowels.length);
+
+  function processPattern(startIndex: number) {
+    if (startIndex >= pattern.length) {
+      if (!possibles[pattern]) possibles[pattern] = 0;
+      possibles[pattern] += 1;
       return;
     }
-    for (const towel of towels) {
-      if (patt.substring(0, towel.length) === towel) {
-        processPattern(patt.substring(towel.length));
+
+    for (const towel of possibleTowels) {
+      let isGoodTowel = true;
+      for (let i = 0; i < towel.length; i++) {
+        if (pattern[startIndex + i] !== towel[i]) {
+          isGoodTowel = false;
+          break;
+        }
       }
+
+      isGoodTowel && processPattern(startIndex + towel.length);
     }
   }
 
-  processPattern(pattern);
+  processPattern(0);
+
+  console.log('pattern done', pattern, possibles[pattern]);
 }
 
-process.stdout.write(`Part 01: ${Object.keys(possibles).length}\n`);
-process.stdout.write(`Part 02: ${2}\n`);
+const part01 = Object.keys(possibles).length;
+const part02 = Object.keys(possibles).reduce((total, pattern) => total + possibles[pattern], 0);
+
+process.stdout.write(`Part 01: ${part01}\n`);
+process.stdout.write(`Part 02: ${part02}\n`);
