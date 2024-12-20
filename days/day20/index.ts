@@ -6,7 +6,7 @@ import path from 'node:path';
 import { readInput } from '../../common';
 import { P, type Position, type Tile, type TileMap, buildMap2d, printMap } from '../../common/map-builder';
 
-const rawMap = readInput(path.join(__dirname, 'input01'), '\n').map((row) => row.split(''));
+const rawMap = readInput(path.join(__dirname, 'inputTest'), '\n').map((row) => row.split(''));
 const map = buildMap2d(rawMap);
 
 const start = [...map.values()].find((tile) => tile.value === 'S');
@@ -14,90 +14,125 @@ const goal = [...map.values()].find((tile) => tile.value === 'E');
 start.value = '.';
 goal.value = '.';
 
+const printMapping = {
+  up: '^',
+  down: 'v',
+  right: '>',
+  left: '<',
+};
+
 printMap(map);
 
-// const walkDistance = 0;
-// let currentTile = start;
-// while (currentTile !== goal) {
-//   currentTile = currentTile.up;
-//   walkDistance += 1
-// }
-
-const visitedMap = new Map<Tile, number>();
-let withNoCheats = Number.POSITIVE_INFINITY;
-function walk(tile: Tile | null, map: TileMap, visitedMap: Map<Tile, number>, path: Tile[], pathSize: number) {
-  const newPathSize = pathSize + 1;
-
-  if (!tile) return;
-  if (tile.value === '#') return;
-  if (newPathSize >= withNoCheats) return;
-  if (visitedMap.get(tile) <= newPathSize) return;
-  if (pathSize + goal.position[0] - tile.position[0] > withNoCheats) return;
-  if (pathSize + goal.position[1] - tile.position[1] > withNoCheats) return;
-  if (path.includes(tile)) return;
-
-  path.push(tile);
-
-  visitedMap.set(tile, newPathSize);
-
-  if (tile === goal) {
-    withNoCheats = Math.min(path.length - 1, withNoCheats);
+let walkDistance = 0;
+let currentTile = start;
+const currentPath = new Set<Tile>([currentTile]);
+currentTile.value = 'x';
+while (currentTile !== goal) {
+  if (currentTile.up?.value === '.') {
+    currentTile.value = 'up';
+    currentTile = currentTile.up;
+  } else if (currentTile.right?.value === '.') {
+    currentTile.value = 'right';
+    currentTile = currentTile.right;
+  } else if (currentTile.down?.value === '.') {
+    currentTile.value = 'down';
+    currentTile = currentTile.down;
+  } else if (currentTile.left?.value === '.') {
+    currentTile.value = 'left';
+    currentTile = currentTile.left;
   }
 
-  for (const direction of ['right', 'down', 'up', 'left'] as const) {
-    walk(tile[direction], map, visitedMap, [...path], newPathSize);
-  }
+  currentPath.add(currentTile);
+
+  walkDistance += 1;
 }
 
-walk(start, map, visitedMap, [], 0);
+printMap(map, [], printMapping);
 
-const visitedMap2 = new Map<Tile, number>();
-const arrivals: number[] = [];
-const cheatThreshold = 100;
-function walkCheating(
-  tile: Tile | null,
-  map: TileMap,
-  visitedMap: Map<Tile, number>,
-  path: Tile[],
-  pathSize: number,
-  cheatUsed: boolean,
-) {
-  const newPathSize = pathSize + 1;
+type Direction = 'up' | 'down' | 'left' | 'right';
 
-  if (!tile) return;
+function cheats(tile: Tile, currentPath: Tile[]): Tile[] {
+  const directions = ['up', 'down', 'left', 'right'] as const;
+  const cheatTiles: Tile[] = [];
 
-  if (tile.value === '#' && cheatUsed) return;
-  if (newPathSize - 1 > withNoCheats - cheatThreshold) return;
-  // if (visitedMap.get(tile) <= newPathSize) return;
-  if (pathSize + goal.position[0] - tile.position[0] > withNoCheats - cheatThreshold) return;
-  if (pathSize + goal.position[1] - tile.position[1] > withNoCheats - cheatThreshold) return;
-  if (path.includes(tile)) return;
+  for (const cheatDirection of directions) {
+    const cheatTile = tile[cheatDirection];
 
-  path.push(tile);
+    if (!cheatTile) continue;
+    if (cheatTile.value !== '#') continue;
 
-  visitedMap.set(tile, newPathSize);
+    for (const nextDirection of directions) {
+      const nextTile = cheatTile[nextDirection];
+
+      if (!nextTile) continue;
+      if (nextTile.value === '#') continue;
+      if (currentPath.includes(nextTile)) continue;
+
+      cheatTiles.push(nextTile);
+    }
+  }
+
+  return cheatTiles;
+}
+
+const walkThreshold = 2;
+const arrivals: Record<number, number> = {};
+function walk(tile: Tile, distance: number, currentPath: Tile[], cheatUsed: boolean) {
+  if (distance > walkDistance - walkThreshold) return;
+  currentPath.push(tile);
 
   if (tile === goal) {
-    console.log('arrival');
-    arrivals.push(withNoCheats - (newPathSize - 1));
+    const savedTime = walkDistance - distance;
+    console.log('Arrived', savedTime);
+
+    if (!arrivals[savedTime]) arrivals[savedTime] = 0;
+    arrivals[savedTime]++;
     return;
   }
 
-  for (const direction of ['right', 'down', 'up', 'left'] as const) {
-    walkCheating(tile[direction], map, visitedMap, [...path], newPathSize, cheatUsed || tile.value === '#');
+  // FollowDirection
+  walk(tile[tile.value as Direction], distance + 1, [...currentPath], cheatUsed);
+  // Use Cheat
+  if (!cheatUsed) {
+    for (const cheatTile of cheats(tile, currentPath)) {
+      walk(cheatTile, distance + 2, [...currentPath], true);
+    }
   }
 }
 
-walkCheating(start, map, visitedMap2, [], 0, false);
+walk(start, 0, [start], false);
 
-console.log(
-  arrivals.reduce<Record<number, number>>((total, arrival) => {
-    if (!total[arrival]) total[arrival] = 0;
-    total[arrival]++;
+console.log(arrivals);
 
-    return total;
-  }, {}),
-);
+const part01 = Object.values(arrivals).reduce((total, arrival) => total + arrival, 0);
 
-process.stdout.write(`Part 01: ${arrivals.length}\n`);
+// const walkThreshold2 = 50;
+// const maxCheatDuration = 20;
+// function walk2(tile: Tile, distance: number, currentPath: Tile[], cheatUsed: number) {
+//   if (distance > walkDistance - walkThreshold2) return;
+//   currentPath.push(tile);
+
+//   if (tile === goal) {
+//     const savedTime = walkDistance - distance;
+//     console.log('Arrived', savedTime);
+
+//     if (!arrivals[savedTime]) arrivals[savedTime] = 0;
+//     arrivals[savedTime]++;
+//     return;
+//   }
+
+//   // FollowDirection
+//   walk2(tile[tile.value as Direction], distance + 1, [...currentPath], cheatUsed);
+
+//   // Use Cheat
+//   if (!cheatUsed) {
+//     for (const cheatTile of cheats(tile, currentPath)) {
+//       walk(cheatTile, distance + 2, [...currentPath], true);
+//     }
+//   }
+// }
+
+// walk2(start, 0, [start], 0);
+
+process.stdout.write(`Part 01: ${part01}\n`);
 process.stdout.write(`Part 02: ${2}\n`);

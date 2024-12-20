@@ -49,7 +49,7 @@ export function buildMap2d(rawMap: string[][]): TileMap {
   return map;
 }
 
-export function printMap(map: TileMap, path?: Tile[]) {
+export function printMap(map: TileMap, path?: Tile[], mapping?: Record<string, string>) {
   let currentTile = map.get(P(0, 0));
   let firstInRow = currentTile;
 
@@ -57,7 +57,7 @@ export function printMap(map: TileMap, path?: Tile[]) {
     if (path?.includes(currentTile)) {
       process.stdout.write('O');
     } else {
-      process.stdout.write(currentTile.value);
+      process.stdout.write(mapping?.[currentTile.value] ?? currentTile.value);
     }
 
     if (!currentTile.right) {
