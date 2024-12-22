@@ -40,18 +40,23 @@ for (const [tile, distance] of tileDistanceToGoal.entries()) {
   tileDistanceToGoal.set(tile, walkDistance - distance);
 }
 
-function getCheatLocations(tile: Tile, distanceWalked: number, walkedPath: Set<Tile>): number[] {
+function getCheatLocations(tile: Tile, distanceWalked: number, walkedPath: Set<Tile>, maxCheatTime: number): number[] {
   const distancesWithCheat: number[] = [];
+  const [tileX, tileY] = tile.position;
 
-  for (const direction of directions) {
-    const cheatTile = tile[direction];
-
-    if (!cheatTile) continue;
+  for (const cheatTile of map.values()) {
     if (cheatTile.value === '#') continue;
+
+    const [cheatTileX, cheatTileY] = cheatTile.position;
+    const distance = Math.abs(cheatTileX - tileX) + Math.abs(cheatTileY - tileY);
+
+    if (distance > maxCheatTime) continue;
+
     if (walkedPath.has(cheatTile)) continue;
 
-    distancesWithCheat.push(distanceWalked + 2 + tileDistanceToGoal.get(cheatTile));
+    distancesWithCheat.push(distanceWalked + distance + tileDistanceToGoal.get(cheatTile));
   }
+
   return distancesWithCheat;
 }
 
@@ -63,35 +68,32 @@ function walkWithCheat(maxCheatTime: number, minSaveTime: number): number {
     walkedPath.add(tile);
     const currentDistanceLeft = tileDistanceToGoal.get(tile);
 
-    // Apply Cheat
-    for (const direction of directions) {
-      if (tile[direction]?.value === '#') {
-        const cheatedDistances = getCheatLocations(
-          tile[direction],
-          walkDistance - currentDistanceLeft,
-          walkedPath,
-        ).filter((distanceToGoal) => walkDistance - distanceToGoal >= minSaveTime);
+    const cheatedDistances = getCheatLocations(
+      tile,
+      walkDistance - currentDistanceLeft,
+      walkedPath,
+      maxCheatTime,
+    ).filter((distanceToGoal) => walkDistance - distanceToGoal >= minSaveTime);
 
-        cheatedDistancesArray.push(...cheatedDistances);
-      }
-    }
+    cheatedDistancesArray.push(...cheatedDistances);
   }
 
-  console.log(
-    cheatedDistancesArray.reduce<Record<number, number>>((totals, distance) => {
-      const savedDistance = walkDistance - distance;
+  // console.log(
+  //   cheatedDistancesArray.reduce<Record<number, number>>((totals, distance) => {
+  //     const savedDistance = walkDistance - distance;
 
-      if (!totals[savedDistance]) totals[savedDistance] = 0;
-      totals[savedDistance]++;
+  //     if (!totals[savedDistance]) totals[savedDistance] = 0;
+  //     totals[savedDistance]++;
 
-      return totals;
-    }, {}),
-  );
+  //     return totals;
+  //   }, {}),
+  // );
 
   return cheatedDistancesArray.length;
 }
 
 const part01 = walkWithCheat(2, 100);
+const part02 = walkWithCheat(20, 100);
 
 process.stdout.write(`Part 01: ${part01}\n`);
-process.stdout.write(`Part 02: ${2}\n`);
+process.stdout.write(`Part 02: ${part02}\n`);
