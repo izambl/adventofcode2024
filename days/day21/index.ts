@@ -14,7 +14,7 @@ import {
   printMap,
 } from '../../common/map-builder';
 
-const inputs = readInput(path.join(__dirname, 'inputTest'), '\n');
+const inputs = readInput(path.join(__dirname, 'input01'), '\n');
 
 type Key = Tile;
 type KeyMap = TileMap;
@@ -122,41 +122,38 @@ function getKeyPad(): Record<KeyPadKeys, Key> {
 }
 
 function getShortestPathToKey(currentKey: Key, goalKey: Key): Direction[] {
+  const goodPaths: Array<[Direction[], number]> = [];
+
   function walk(
     currentKey: Key | null,
     searchedKey: Key,
-    visitedMap: Map<Key, number>,
+    visitedMap: Map<string, number>,
     walkedPath: Key[],
     directionPath: Direction[],
-    pathSize: number,
-    goodPaths: Array<Direction[]>,
+    pathCost: number,
     currentDirection: Direction,
   ) {
-    const newPathSize = pathSize + 1;
-
-    if (!currentKey) return;
-    if (visitedMap.get(currentKey) <= newPathSize) return;
+    const keyKey = `${currentKey.value}-${currentDirection}`;
+    // if (visitedMap.get(keyKey) <= pathCost) return;
     if (walkedPath.includes(currentKey)) return;
 
     walkedPath.push(currentKey);
-
-    visitedMap.set(currentKey, newPathSize);
+    visitedMap.set(keyKey, pathCost);
 
     if (currentKey === searchedKey) {
-      //console.log('Arrived', pathSize, directionPath);
-      goodPaths.push(directionPath);
-      return goodPaths;
+      goodPaths.push([directionPath, pathCost]);
     }
 
     for (const direction of ['left', 'down', 'right', 'up'] as const) {
+      if (currentKey[direction] === null) continue;
+
       walk(
         currentKey[direction],
         searchedKey,
         visitedMap,
         [...walkedPath],
         [...directionPath, direction],
-        newPathSize,
-        goodPaths,
+        pathCost + 1 + (direction === currentDirection ? 1 : 5),
         direction,
       );
     }
@@ -164,13 +161,16 @@ function getShortestPathToKey(currentKey: Key, goalKey: Key): Direction[] {
     return goodPaths;
   }
 
-  const goodPaths = walk(currentKey, goalKey, new Map(), [], [], 0, [], 'up');
-  const shortestPath = goodPaths.sort((pathA, pathB) => pathA.length - pathB.length)[0];
+  walk(currentKey, goalKey, new Map(), [], [], 0, null);
+  const shortestPath = goodPaths.sort(([_a, costA], [_b, costB]) => costA - costB)[0][0];
+
+  // console.log('FROM', currentKey.value, 'TO', goalKey.value, shortestPath, goodPaths);
 
   return shortestPath;
 }
 
 let total = 0;
+const intermediateRobots = 2;
 for (const codeInput of inputs) {
   console.log('Entering code', codeInput);
 
@@ -186,6 +186,8 @@ for (const codeInput of inputs) {
 
     codeSequence.push(...shortestPath, 'A');
   }
+
+  //while (intermediateRobots--) {}
 
   // Robot at key pad
   const codeSequence2: KeyPadKeys[] = [];
@@ -212,42 +214,6 @@ for (const codeInput of inputs) {
     codeSequence3.push(...shortestPath, 'A');
   }
 
-  console.log(codeSequence3.length);
-  console.log(codeInput);
-  console.log(
-    codeSequence
-      .map((x) => {
-        if (x === 'down') return 'v';
-        if (x === 'up') return '^';
-        if (x === 'right') return '>';
-        if (x === 'left') return '<';
-        return x;
-      })
-      .join(''),
-  );
-  console.log(
-    codeSequence2
-      .map((x) => {
-        if (x === 'down') return 'v';
-        if (x === 'up') return '^';
-        if (x === 'right') return '>';
-        if (x === 'left') return '<';
-        return x;
-      })
-      .join(''),
-  );
-  console.log(
-    codeSequence3
-      .map((x) => {
-        if (x === 'down') return 'v';
-        if (x === 'up') return '^';
-        if (x === 'right') return '>';
-        if (x === 'left') return '<';
-        return x;
-      })
-      .join(''),
-  );
-
   total += codeSequence3.length * Number(codeInput.slice(0, -1));
 }
 
@@ -255,9 +221,13 @@ process.stdout.write(`Part 01: ${total}\n`);
 process.stdout.write(`Part 02: ${2}\n`);
 
 // 029A
+// <A^A^^>AvvvA
 // <A^A>^^AvvvA
-// <A^A>^^AvvvA
-// <v<A>>^A<A>AvA<^AA>A<vAAA>^A
+// v<<A>>^A<A>A<AAv>A^A<vAAA^>A
 // v<<A>>^A<A>AvA<^AA>A<vAAA>^A
-// <v<A>A<A>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
+// <vA<AA>>^AvAA^<A>Av<<A>>^AvA^Av<<A>>^AA<vA>A^A<A>Av<<A>A^>AAA<Av>A^A
 // <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
+
+//    <    A  ^  A  >   ^   ^  A   v v v   A
+// v<<A >>^A <A >A <A   A v>A ^A <vA A A ^>A
+// v<<A >>^A <A >A vA <^A   A >A <vA A A >^A
